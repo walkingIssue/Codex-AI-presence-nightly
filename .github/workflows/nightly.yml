@@ -1,0 +1,62 @@
+name: Nightly skill snapshot
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      publish-release:
+        description: Publish the validated snapshot as a GitHub prerelease
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Validate and package nightly skill
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the development lab
+        uses: actions/checkout@v4
+        with:
+          repository: walkingIssue/Codex-AI-presence-lab
+          ref: main
+          path: lab
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Project and validate the skill
+        shell: bash
+        working-directory: lab
+        run: |
+          python tools/project_release.py --source . --output dist
+          python tools/e2e_check.py --source dist
+          tar -czf codex-ai-presence-nightly.tgz -C dist skills
+
+      - name: Upload nightly artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-ai-presence-nightly
+          path: lab/codex-ai-presence-nightly.tgz
+          if-no-files-found: error
+
+      - name: Publish GitHub prerelease
+        if: ${{ github.event_name == 'schedule' || inputs.publish-release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        working-directory: lab
+        run: |
+          tag="nightly-$(date -u +%Y%m%d-%H%M)"
+          gh release create "$tag" codex-ai-presence-nightly.tgz \
+            --repo "$GITHUB_REPOSITORY" \
+            --prerelease \
+            --title "Codex AI Presence $tag" \
+            --notes "Automated prerelease generated from the validated development lab."
+
