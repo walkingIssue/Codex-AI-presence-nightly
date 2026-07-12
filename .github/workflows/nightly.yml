@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: walkingIssue/Codex-AI-presence-lab
-          ref: main
+          ref: nightly/app-server-bridge
           path: lab
 
       - name: Set up Python
@@ -59,4 +59,3 @@ jobs:
             --prerelease \
             --title "Codex AI Presence $tag" \
             --notes "Automated prerelease generated from the validated development lab."
-
