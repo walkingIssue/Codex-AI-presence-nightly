@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: walkingIssue/Codex-AI-presence-lab
-          ref: main
+          ref: agent/unify-presence-routing
           path: lab
 
       - name: Set up Python
